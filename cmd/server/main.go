@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,16 +15,20 @@ import (
 )
 
 func main() {
+	// Projector calls GET /sessions/:id/images?limit=200 repeatedly or (better) you push via WebSocket using Redis Streams as discussed earlier.
 	cfg := config.Load()
-	fmt.Print(cfg.MinioPresignedExpiry)
 
-	minioStore, err := storage.NewMinio(cfg.MinIOEndpoint, cfg.MinIOAccessKey, cfg.MinIOSecretKey, cfg.MinIOBucket, cfg.MinioPresignedExpiry, false)
-
+	minioStore, err := storage.NewMinio(cfg.MinioCfg.MinIOEndpoint, cfg.MinioCfg.MinIOAccessKey, cfg.MinioCfg.MinIOSecretKey, cfg.MinioCfg.MinIOBucket, cfg.MinioCfg.MinioPresignedExpiry, false)
 	if err != nil {
 		log.Fatalf("failed to init minio: %v", err)
 	}
 
-	r := ginHttp.NewRouter(minioStore)
+	mongoStore, err := storage.NewMongo(cfg.MongoCfg.Hosts, cfg.MongoCfg.DbUsername, cfg.MongoCfg.DbPassword, cfg.MongoCfg.DbName, cfg.MongoCfg.DbOpts)
+	if err != nil {
+		log.Fatalf("failed to init mongo: %v", err)
+	}
+
+	r := ginHttp.NewRouter(minioStore, mongoStore, cfg)
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -34,7 +37,7 @@ func main() {
 
 	// Start server
 	go func() {
-		log.Printf("starting server on :%s", cfg.AppPort)
+		log.Printf("starting server on :%s", cfg.GeneralCfg.GinPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}

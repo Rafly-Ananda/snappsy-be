@@ -7,6 +7,7 @@ services:
   #   restart: always
   #   depends_on:
   #     - minio
+  #     - mongo
   #   env_file:
   #     - .env
   #   ports:
@@ -15,6 +16,19 @@ services:
   #     - .:/app
   #   working_dir: /app
   #   command: ["./tmp/main"]
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo_data:/data/db
 
   minio:
     image: minio/minio:latest
@@ -46,3 +60,4 @@ services:
 
 volumes:
   minio-data:
+  mongo_data:
