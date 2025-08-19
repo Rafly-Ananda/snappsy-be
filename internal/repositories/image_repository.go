@@ -1,4 +1,4 @@
-package interfaces
+package repositories
 
 import (
 	"context"
@@ -9,5 +9,4 @@ import (
 type ImageRepository interface {
 	Insert(ctx context.Context, image models.Images) (string, error)
 	FindAllBySession(ctx context.Context, sessionId string) ([]models.Images, error)
-	ObjSectStorage
 }

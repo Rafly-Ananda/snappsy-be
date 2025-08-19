@@ -17,6 +17,7 @@ func NewImageHandler(service *services.ImageService) *ImageHandler {
 	return &ImageHandler{service: service}
 }
 
+// POST Requexsts
 func (h *ImageHandler) CommitImageUpload(c *gin.Context) {
 	var req images.CommitUploadReq
 
@@ -34,13 +35,6 @@ func (h *ImageHandler) CommitImageUpload(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *ImageHandler) GetAllImages(c *gin.Context) {
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-	})
-}
-
 func (h *ImageHandler) GeneratePresignedUploader(c *gin.Context) {
 	var req images.GeneratePresignedUrlReq
 
@@ -56,6 +50,14 @@ func (h *ImageHandler) GeneratePresignedUploader(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// GET Requests
+func (h *ImageHandler) GetAllImages(c *gin.Context) {
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+	})
 }
 
 func (h *ImageHandler) GeneratePresignedViewer(c *gin.Context) {

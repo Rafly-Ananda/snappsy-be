@@ -6,17 +6,26 @@ import (
 
 	imgDto "github.com/rafly-ananda/snappsy-uploader-api/internal/dto/images"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/helper"
-	"github.com/rafly-ananda/snappsy-uploader-api/internal/interfaces"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/models"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/repositories"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/storage"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ImageService struct {
-	repo interfaces.ImageRepository
+	repo         repositories.ImageRepository
+	obj          storage.ObjectStorage
+	bucket       string
+	presignedTtl time.Duration
 }
 
-func NewImageService(repo interfaces.ImageRepository) *ImageService {
-	return &ImageService{repo: repo}
+func NewImageService(repo repositories.ImageRepository, obj storage.ObjectStorage, bucket string, presignedTtl time.Duration) *ImageService {
+	return &ImageService{
+		repo:         repo,
+		obj:          obj,
+		bucket:       bucket,
+		presignedTtl: presignedTtl,
+	}
 }
 
 func (s *ImageService) CommitImageUpload(ctx context.Context, req imgDto.CommitUploadReq) (imgDto.CommitUploadRes, error) {
@@ -49,7 +58,7 @@ func (s *ImageService) GeneratePresignedUploader(ctx context.Context, req imgDto
 	key := req.Username + "-" + req.EventKey + "-" + time.Now().Format("20060102150405") + mime.Ext
 
 	// Get presigned upload URL from storage (via the interface)
-	url, err := s.repo.PresignedPut(ctx, key, mime.MIME)
+	url, err := s.obj.PresignPut(ctx, s.bucket, key, s.presignedTtl)
 	if err != nil {
 		return imgDto.GeneratePresignedUrlRes{}, err
 	}
@@ -62,7 +71,7 @@ func (s *ImageService) GeneratePresignedUploader(ctx context.Context, req imgDto
 }
 
 func (s *ImageService) GeneratePresignedViewer(ctx context.Context, key string, expiry time.Duration) (imgDto.GeneratePresignedUrlView, error) {
-	url, err := s.repo.PresignedGet(ctx, key, expiry)
+	url, err := s.obj.PresignGet(ctx, s.bucket, key, expiry)
 	if err != nil {
 		return imgDto.GeneratePresignedUrlView{}, err
 	}

@@ -10,7 +10,11 @@ import (
 	"time"
 
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/config"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/db"
 	ginHttp "github.com/rafly-ananda/snappsy-uploader-api/internal/http"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/http/handlers/images"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/repositories"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/services"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/storage"
 )
 
@@ -23,12 +27,23 @@ func main() {
 		log.Fatalf("failed to init minio: %v", err)
 	}
 
-	mongoStore, err := storage.NewMongo(cfg.MongoCfg.Hosts, cfg.MongoCfg.DbUsername, cfg.MongoCfg.DbPassword, cfg.MongoCfg.DbName, cfg.MongoCfg.DbOpts)
+	mongoStore, err := db.NewMongo(cfg.MongoCfg.Hosts, cfg.MongoCfg.DbUsername, cfg.MongoCfg.DbPassword, cfg.MongoCfg.DbName, cfg.MongoCfg.DbOpts)
 	if err != nil {
 		log.Fatalf("failed to init mongo: %v", err)
 	}
 
-	r := ginHttp.NewRouter(minioStore, mongoStore, cfg)
+	// Repository Initialization
+	imageRepo := repositories.NewMongoImageRepository(mongoStore.Db.Collection(cfg.MongoCfg.ImageCollection))
+
+	// Service Initialization
+	imageSvc := services.NewImageService(imageRepo, minioStore, cfg.MinioCfg.MinIOBucket, cfg.MinioCfg.MinioPresignedExpiry)
+
+	// Handler Initialization
+	imageHandler := images.NewImageHandler(imageSvc)
+
+	r := ginHttp.NewRouter(ginHttp.Handlers{
+		Images: imageHandler,
+	})
 
 	srv := &http.Server{
 		Addr:    ":8080",

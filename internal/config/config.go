@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -28,7 +29,7 @@ type MinioConfig struct {
 	MinIOAccessKey       string
 	MinIOSecretKey       string
 	MinIOBucket          string
-	MinioPresignedExpiry int
+	MinioPresignedExpiry time.Duration
 }
 
 type Config struct {
@@ -70,7 +71,7 @@ func GetMinio() MinioConfig {
 		MinIOAccessKey:       getEnv("MINIO_ACCESS_KEY", "minioadmin"),
 		MinIOSecretKey:       getEnv("MINIO_SECRET_KEY", "minioadmin"),
 		MinIOBucket:          getEnv("MINIO_BUCKET", "images"),
-		MinioPresignedExpiry: getEnvInt("MINIO_EXPIRY_IN_MINUTES", 30),
+		MinioPresignedExpiry: time.Duration(getEnvInt("MINIO_EXPIRY_IN_MINUTES", 30)) * time.Minute,
 	}
 }
 

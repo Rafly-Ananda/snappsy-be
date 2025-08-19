@@ -1,4 +1,4 @@
-package storage
+package db
 
 import (
 	"context"
@@ -35,10 +35,8 @@ func NewMongo(host string, username string, password string, dbName string, mong
 
 	log.Println("Connected to MongoDB:", uri)
 
-	db := cl.Database(dbName)
-
 	return &MongoStorage{
 		Client: cl,
-		Db:     db,
+		Db:     cl.Database(dbName),
 	}, nil
 }
