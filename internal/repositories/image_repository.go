@@ -8,5 +8,5 @@ import (
 
 type ImageRepository interface {
 	Insert(ctx context.Context, image models.Images) (string, error)
-	FindAllBySession(ctx context.Context, sessionId string) ([]models.Images, error)
+	FindAllByEvents(ctx context.Context, eventId string, cursor string, limit int) ([]models.Images, string, error)
 }

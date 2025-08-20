@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -39,4 +40,21 @@ func NewMongo(host string, username string, password string, dbName string, mong
 		Client: cl,
 		Db:     cl.Database(dbName),
 	}, nil
+}
+
+func ensureIndexes(collection *mongo.Collection, ctx context.Context) error {
+	mod := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "eventId", Value: 1},
+			{Key: "createdAt", Value: -1},
+		},
+		Options: options.Index().SetName("eventId_createdAt_idx"),
+	}
+	_, err := collection.Indexes().CreateOne(ctx, mod)
+
+	if err != nil {
+		log.Printf("index creation error: %v", err)
+	}
+
+	return err
 }

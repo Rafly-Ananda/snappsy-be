@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	imgDto "github.com/rafly-ananda/snappsy-uploader-api/internal/dto/images"
@@ -31,7 +32,7 @@ func NewImageService(repo repositories.ImageRepository, obj storage.ObjectStorag
 func (s *ImageService) CommitImageUpload(ctx context.Context, req imgDto.CommitUploadReq) (imgDto.CommitUploadRes, error) {
 	image := models.Images{
 		ID:        primitive.NewObjectID(),
-		SessionId: req.SessionId,
+		EventId:   req.EventId,
 		Username:  req.Username,
 		MinioKey:  req.MinioKey,
 		Captions:  req.Captions,
@@ -55,7 +56,8 @@ func (s *ImageService) GeneratePresignedUploader(ctx context.Context, req imgDto
 	}
 
 	// Generate unique object key (combine username, session)
-	key := req.Username + "-" + req.EventKey + "-" + time.Now().Format("20060102150405") + mime.Ext
+	// TODO: need to remove or change time Format()
+	key := fmt.Sprintf("%s-%s-%s%s", req.Username, req.EventId, time.Now().Format("20060102150405"), mime.Ext)
 
 	// Get presigned upload URL from storage (via the interface)
 	url, err := s.obj.PresignPut(ctx, s.bucket, key, s.presignedTtl)
@@ -79,4 +81,28 @@ func (s *ImageService) GeneratePresignedViewer(ctx context.Context, key string, 
 	return imgDto.GeneratePresignedUrlView{
 		Url: url,
 	}, nil
+}
+
+func (s *ImageService) GetAllPresignedImagesByEvent(ctx context.Context, eventId string, cursor string, limit int, expiry time.Duration) ([]imgDto.GeneratePresignedUrlView, string, error) {
+	imgs, next, err := s.repo.FindAllByEvents(ctx, eventId, cursor, limit)
+	if err != nil {
+		return []imgDto.GeneratePresignedUrlView{}, "", err
+	}
+
+	var presignedList []imgDto.GeneratePresignedUrlView
+
+	for _, item := range imgs {
+		url, err := s.obj.PresignGet(ctx, s.bucket, item.MinioKey, expiry)
+		if err != nil {
+			continue
+		}
+
+		presignedList = append(presignedList, imgDto.GeneratePresignedUrlView{
+			Url:      url,
+			Captions: item.Captions,
+			From:     item.Username,
+		})
+	}
+
+	return presignedList, next, nil
 }

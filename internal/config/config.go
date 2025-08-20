@@ -14,14 +14,14 @@ type GeneralConfig struct {
 }
 
 type MongoConfig struct {
-	Hosts              string
-	DbName             string
-	DbUsername         string
-	DbPassword         string
-	DbOpts             string
-	ImageCollection    string
-	UserCollection     string
-	SessionsCollection string
+	Hosts           string
+	DbName          string
+	DbUsername      string
+	DbPassword      string
+	DbOpts          string
+	ImageCollection string
+	UserCollection  string
+	EventCollection string
 }
 
 type MinioConfig struct {
@@ -54,14 +54,14 @@ func Load() *Config {
 
 func GetMongo() MongoConfig {
 	return MongoConfig{
-		Hosts:              getEnv("MONGODB_HOST", "localhost:9000"),
-		DbName:             getEnv("MONGO_INITDB_DATABASE", "snappsy"),
-		DbUsername:         getEnv("MONGODB_USERNAME", "mongoadmin"),
-		DbPassword:         getEnv("MONGODB_USERNAME", "mongoadmin"),
-		DbOpts:             getEnv("MONGO_OPTIONS", ""),
-		ImageCollection:    getEnv("MONGO_IMAGES_COLLECTION", "images"),
-		SessionsCollection: getEnv("MONGO_SESSIONS_COLLECTION", "sessions"),
-		UserCollection:     getEnv("MONGO_USER_COLLECTION", "users"),
+		Hosts:           getEnv("MONGODB_HOST", "localhost:9000"),
+		DbName:          getEnv("MONGO_INITDB_DATABASE", "snappsy"),
+		DbUsername:      getEnv("MONGODB_USERNAME", "mongoadmin"),
+		DbPassword:      getEnv("MONGODB_USERNAME", "mongoadmin"),
+		DbOpts:          getEnv("MONGO_OPTIONS", ""),
+		ImageCollection: getEnv("MONGO_IMAGES_COLLECTION", "images"),
+		EventCollection: getEnv("MONGO_EVENTS_COLLECTION", "events"),
+		UserCollection:  getEnv("MONGO_USER_COLLECTION", "users"),
 	}
 }
 

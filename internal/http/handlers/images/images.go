@@ -2,6 +2,7 @@ package images
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,10 +54,24 @@ func (h *ImageHandler) GeneratePresignedUploader(c *gin.Context) {
 }
 
 // GET Requests
-func (h *ImageHandler) GetAllImages(c *gin.Context) {
+func (h *ImageHandler) GetAllImagesByEvent(c *gin.Context) {
+	cursor := c.Query("cursor")
+	eventId := c.Param("eventId")
+
+	// TODO: make limit default query in constant
+	limitStr := c.DefaultQuery("limit", "20")
+	limit, _ := strconv.Atoi(limitStr)
+
+	// TODO: invalidated in 10 mins, need to be in env later
+	data, next, err := h.service.GetAllPresignedImagesByEvent(c, eventId, cursor, limit, 10*time.Minute)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"data":       data,
+		"nextCursor": next, // "" means no more
 	})
 }
 
@@ -67,7 +82,7 @@ func (h *ImageHandler) GeneratePresignedViewer(c *gin.Context) {
 		return
 	}
 
-	// invalidated in 10 mins, need to be in env later
+	// TODO: invalidated in 10 mins, need to be in env later
 	res, err := h.service.GeneratePresignedViewer(c, key, 10*time.Minute)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})

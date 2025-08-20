@@ -5,11 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/http/handlers/events"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/http/handlers/images"
 )
 
 type Handlers struct {
 	Images *images.ImageHandler
+	Events *events.EventHandler
 }
 
 func NewRouter(h Handlers) *gin.Engine {
@@ -24,7 +26,12 @@ func NewRouter(h Handlers) *gin.Engine {
 		img.POST("/generate-uploader-url", h.Images.GeneratePresignedUploader)
 		img.POST("", h.Images.CommitImageUpload)
 		img.GET("/generate-url", h.Images.GeneratePresignedViewer)
-		img.GET("/images", h.Images.GetAllImages)
+		img.GET("/:eventId/slideshow-items", h.Images.GetAllImagesByEvent)
+	}
+
+	{
+		events := v1.Group("/events")
+		events.POST("/register", h.Events.RegisterEvent)
 	}
 
 	// simple health check

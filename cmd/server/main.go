@@ -12,8 +12,9 @@ import (
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/config"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/db"
 	ginHttp "github.com/rafly-ananda/snappsy-uploader-api/internal/http"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/http/handlers/events"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/http/handlers/images"
-	"github.com/rafly-ananda/snappsy-uploader-api/internal/repositories"
+	"github.com/rafly-ananda/snappsy-uploader-api/internal/repositories/impls"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/services"
 	"github.com/rafly-ananda/snappsy-uploader-api/internal/storage"
 )
@@ -33,16 +34,20 @@ func main() {
 	}
 
 	// Repository Initialization
-	imageRepo := repositories.NewMongoImageRepository(mongoStore.Db.Collection(cfg.MongoCfg.ImageCollection))
+	imageRepo := impls.NewMongoImageRepository(mongoStore.Db.Collection(cfg.MongoCfg.ImageCollection))
+	eventRepo := impls.NewMongoEventRepository(mongoStore.Db.Collection(cfg.MongoCfg.EventCollection))
 
 	// Service Initialization
 	imageSvc := services.NewImageService(imageRepo, minioStore, cfg.MinioCfg.MinIOBucket, cfg.MinioCfg.MinioPresignedExpiry)
+	eventSvc := services.NewEventService(eventRepo)
 
 	// Handler Initialization
 	imageHandler := images.NewImageHandler(imageSvc)
+	eventHandler := events.NewEventHandler(eventSvc)
 
 	r := ginHttp.NewRouter(ginHttp.Handlers{
 		Images: imageHandler,
+		Events: eventHandler,
 	})
 
 	srv := &http.Server{

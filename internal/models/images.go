@@ -8,7 +8,7 @@ import (
 
 type Images struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	SessionId string             `bson:"sessionId" json:"sessionId"`
+	EventId   string             `bson:"eventId" json:"sessionId"`
 	Username  string             `bson:"username" json:"username"`
 	MinioKey  string             `bson:"minioKey" json:"minioKey"`
 	Captions  string             `bson:"captions" json:"captions"`
